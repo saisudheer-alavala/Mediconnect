@@ -13,7 +13,28 @@ const health_record_routes_1 = require("./health_record.routes");
 const notification_routes_1 = require("./notification.routes");
 const review_routes_1 = require("./review.routes");
 const profile_routes_1 = require("./profile.routes");
+const api_response_1 = require("../utils/api_response");
 const router = (0, express_1.Router)();
+// Base API V1 Directory
+router.get('/', (_req, res) => {
+    (0, api_response_1.successResponse)(res, {
+        name: 'MediCare Connect REST API',
+        version: 'v1',
+        endpoints: {
+            health: '/api/v1/health',
+            auth: '/api/v1/auth',
+            medicines: '/api/v1/medicines',
+            doctors: '/api/v1/doctors',
+            appointments: '/api/v1/appointments',
+            prescriptions: '/api/v1/prescriptions',
+            emergency: '/api/v1/emergency',
+            healthRecords: '/api/v1/health-records',
+            notifications: '/api/v1/notifications',
+            reviews: '/api/v1/reviews',
+            profile: '/api/v1/profile',
+        },
+    }, 'MediCare Connect API v1 is active');
+});
 // Health Check
 router.use('/health', health_routes_1.healthRoutes);
 // Authentication & Identity
