@@ -85,7 +85,7 @@ export class UserRepository {
     clinicName: string;
     clinicAddress?: string;
   }): Promise<User> {
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: any) => {
       // Find or create specialization
       const specialization = await tx.specialization.upsert({
         where: { name: params.specializationName },
