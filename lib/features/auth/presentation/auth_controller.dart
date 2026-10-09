@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/auth_repository.dart';
+import '../domain/user_model.dart';
 import 'auth_state.dart';
 
 class AuthController extends Notifier<AuthState> {
@@ -137,6 +138,11 @@ class AuthController extends Notifier<AuthState> {
       );
       return false;
     }
+  }
+
+  /// Update active user state
+  void updateUser(UserModel updatedUser) {
+    state = state.copyWith(user: updatedUser);
   }
 
   /// Log out

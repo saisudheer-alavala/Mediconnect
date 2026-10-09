@@ -537,38 +537,99 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
 
     final pat = user.patientProfile;
+    final genderStr = pat?.gender != null
+        ? (pat!.gender!.toUpperCase() == 'MALE' ? 'Male' : (pat.gender!.toUpperCase() == 'FEMALE' ? 'Female' : 'Other'))
+        : 'Not Set';
+    final dobStr = pat?.dateOfBirth != null && pat!.dateOfBirth!.isNotEmpty
+        ? pat.dateOfBirth!
+        : 'Not Set';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(14),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _buildDetailStat(
-              label: 'Blood Group',
-              value: pat?.bloodGroup ?? 'Not Set',
-              icon: Icons.bloodtype_outlined,
-              iconColor: AppColors.error,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Clinical & Health Summary',
+                style: AppTextStyles.titleSmall.copyWith(fontWeight: FontWeight.w700),
+              ),
+              InkWell(
+                onTap: () => _showEditProfileSheet(user),
+                child: Text(
+                  'Edit Details',
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: _buildDetailStat(
-              label: 'Known Allergies',
-              value: pat?.allergies?.isNotEmpty == true ? pat!.allergies! : 'None Reported',
-              icon: Icons.warning_amber_rounded,
-              iconColor: AppColors.warning,
-            ),
+          const Divider(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: _buildDetailStat(
+                  label: 'Blood Group',
+                  value: pat?.bloodGroup ?? 'Not Set',
+                  icon: Icons.bloodtype_outlined,
+                  iconColor: AppColors.error,
+                ),
+              ),
+              Expanded(
+                child: _buildDetailStat(
+                  label: 'Gender',
+                  value: genderStr,
+                  icon: Icons.person_outline_rounded,
+                  iconColor: AppColors.primary,
+                ),
+              ),
+              Expanded(
+                child: _buildDetailStat(
+                  label: 'Birth Date',
+                  value: dobStr,
+                  icon: Icons.cake_outlined,
+                  iconColor: AppColors.secondary,
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: _buildDetailStat(
-              label: 'Chronic Diseases',
-              value: pat?.chronicDiseases?.isNotEmpty == true ? pat!.chronicDiseases! : 'None Reported',
-              icon: Icons.medical_information_outlined,
-              iconColor: AppColors.primary,
-            ),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _buildDetailStat(
+                  label: 'Known Allergies',
+                  value: pat?.allergies?.isNotEmpty == true ? pat!.allergies! : 'None Reported',
+                  icon: Icons.warning_amber_rounded,
+                  iconColor: AppColors.warning,
+                ),
+              ),
+              Expanded(
+                child: _buildDetailStat(
+                  label: 'Health Thoughts & Conditions',
+                  value: pat?.chronicDiseases?.isNotEmpty == true ? pat!.chronicDiseases! : 'None Reported',
+                  icon: Icons.medical_information_outlined,
+                  iconColor: AppColors.primaryDark,
+                ),
+              ),
+            ],
           ),
         ],
       ),

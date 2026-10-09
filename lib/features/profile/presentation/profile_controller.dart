@@ -108,6 +108,7 @@ class ProfileController extends Notifier<ProfileState> {
         isUpdating: false,
         successMessage: 'Profile details updated successfully',
       );
+      ref.read(authControllerProvider.notifier).updateUser(updated);
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -148,6 +149,7 @@ class ProfileController extends Notifier<ProfileState> {
         isUpdating: false,
         successMessage: 'Professional profile updated successfully',
       );
+      ref.read(authControllerProvider.notifier).updateUser(updated);
       return true;
     } catch (e) {
       state = state.copyWith(

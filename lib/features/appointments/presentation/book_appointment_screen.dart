@@ -126,20 +126,7 @@ class _BookAppointmentScreenState extends ConsumerState<BookAppointmentScreen> {
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Appointment booked successfully with ${widget.doctor.fullName}!'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      // Navigate back or to appointments list
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      } else {
-        try {
-          context.go('/patient/appointments');
-        } catch (_) {}
-      }
+      _showBookingSuccessModal();
     } else {
       final error = ref.read(appointmentControllerProvider).errorMessage ?? 'Failed to book appointment';
       ScaffoldMessenger.of(context).showSnackBar(
@@ -149,6 +136,111 @@ class _BookAppointmentScreenState extends ConsumerState<BookAppointmentScreen> {
         ),
       );
     }
+  }
+
+  void _showBookingSuccessModal() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: AppColors.successLight,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 52),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              'Appointment Confirmed!',
+              style: AppTextStyles.headlineSmall.copyWith(
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimaryLight,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Your consultation with ${widget.doctor.fullName} has been successfully scheduled.',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondaryLight),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 18),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.inputBackground,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.borderLight),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        DateFormat('EEE, MMM d, yyyy').format(_selectedDate),
+                        style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.access_time_rounded, size: 16, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      Text(
+                        _selectedSlot?.startTime ?? '',
+                        style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 16),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined, size: 16, color: AppColors.textSecondaryLight),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          widget.doctor.clinicName,
+                          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondaryLight),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            CustomButton(
+              text: 'View My Appointments',
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                context.go('/patient/appointments');
+              },
+            ),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                context.go('/patient');
+              },
+              child: Text(
+                'Back to Home Dashboard',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override

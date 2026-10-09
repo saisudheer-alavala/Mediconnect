@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -26,6 +27,8 @@ class _EditPatientProfileSheetState extends ConsumerState<EditPatientProfileShee
   late final TextEditingController _allergiesController;
   late final TextEditingController _chronicController;
   String? _selectedBloodGroup;
+  String? _selectedGender;
+  DateTime? _selectedDob;
 
   final List<String> _bloodGroups = [
     'A+',
@@ -38,6 +41,8 @@ class _EditPatientProfileSheetState extends ConsumerState<EditPatientProfileShee
     'O-',
   ];
 
+  final List<String> _genders = ['MALE', 'FEMALE', 'OTHER'];
+
   @override
   void initState() {
     super.initState();
@@ -47,6 +52,12 @@ class _EditPatientProfileSheetState extends ConsumerState<EditPatientProfileShee
     _allergiesController = TextEditingController(text: profile?.allergies ?? '');
     _chronicController = TextEditingController(text: profile?.chronicDiseases ?? '');
     _selectedBloodGroup = profile?.bloodGroup;
+    _selectedGender = profile?.gender?.toUpperCase();
+    if (profile?.dateOfBirth != null && profile!.dateOfBirth!.isNotEmpty) {
+      try {
+        _selectedDob = DateTime.parse(profile.dateOfBirth!);
+      } catch (_) {}
+    }
   }
 
   @override
@@ -58,12 +69,30 @@ class _EditPatientProfileSheetState extends ConsumerState<EditPatientProfileShee
     super.dispose();
   }
 
+  Future<void> _pickDateOfBirth() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDob ?? DateTime(now.year - 25, 1, 1),
+      firstDate: DateTime(now.year - 110),
+      lastDate: now,
+      helpText: 'Select Date of Birth',
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDob = picked;
+      });
+    }
+  }
+
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
     final success = await ref.read(profileControllerProvider.notifier).updatePatientProfile(
           fullName: _nameController.text.trim(),
           phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+          dateOfBirth: _selectedDob != null ? DateFormat('yyyy-MM-dd').format(_selectedDob!) : null,
+          gender: _selectedGender,
           bloodGroup: _selectedBloodGroup,
           allergies: _allergiesController.text.trim().isEmpty ? null : _allergiesController.text.trim(),
           chronicDiseases: _chronicController.text.trim().isEmpty ? null : _chronicController.text.trim(),
@@ -148,6 +177,77 @@ class _EditPatientProfileSheetState extends ConsumerState<EditPatientProfileShee
                 prefixIcon: Icons.phone_outlined,
               ),
               const SizedBox(height: 14),
+              // Date of Birth & Gender Row
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: _pickDateOfBirth,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.borderLight),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.cake_outlined, color: AppColors.primary, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Date of Birth',
+                                    style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondaryLight),
+                                  ),
+                                  Text(
+                                    _selectedDob != null
+                                        ? DateFormat('MMM d, yyyy').format(_selectedDob!)
+                                        : 'Tap to select',
+                                    style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _selectedGender,
+                      decoration: InputDecoration(
+                        labelText: 'Gender',
+                        prefixIcon: const Icon(Icons.people_outline_rounded, color: AppColors.primary),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      ),
+                      hint: const Text('Gender'),
+                      items: _genders.map((g) {
+                        return DropdownMenuItem(
+                          value: g,
+                          child: Text(
+                            g == 'MALE' ? 'Male' : (g == 'FEMALE' ? 'Female' : 'Other'),
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedGender = val;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
               DropdownButtonFormField<String>(
                 initialValue: _selectedBloodGroup,
                 decoration: InputDecoration(
@@ -181,8 +281,9 @@ class _EditPatientProfileSheetState extends ConsumerState<EditPatientProfileShee
               const SizedBox(height: 14),
               CustomTextField(
                 controller: _chronicController,
-                labelText: 'Chronic Conditions',
-                hintText: 'e.g. Hypertension, Diabetes Type 2',
+                labelText: 'Personal Health Thoughts & Conditions',
+                hintText: 'e.g. Hypertension, diet notes, morning consultations preferred...',
+                maxLines: 2,
                 prefixIcon: Icons.medical_information_outlined,
               ),
               if (state.error != null) ...[

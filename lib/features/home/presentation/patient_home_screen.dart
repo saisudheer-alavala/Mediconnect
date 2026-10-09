@@ -36,14 +36,25 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen> {
             children: [
               // Top Header: User Greeting & Avatar
               _buildHeader(patientName),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
               // Emergency SOS Banner
               _buildEmergencyCard(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
+
+              // Exclusive 80% OFF Medicine Offer Banner
+              _buildPromotionalOfferBanner(),
+              const SizedBox(height: 18),
 
               // Upcoming Appointment Card
               _buildUpcomingAppointmentCard(),
+              const SizedBox(height: 18),
+
+              // Daily Adherence Score Ring
+              _buildAdherenceTrackerCard(
+                todayDoses.where((d) => d.isTaken).length,
+                todayDoses.length,
+              ),
               const SizedBox(height: 24),
 
               // Today's Medicines Adherence Checklist
@@ -600,6 +611,242 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen> {
                 fontSize: 11,
                 height: 1.35,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPromotionalOfferBanner() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0284C7), Color(0xFF0F766E)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0284C7).withValues(alpha: 0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -15,
+            bottom: -20,
+            child: Icon(
+              Icons.local_pharmacy_rounded,
+              size: 130,
+              color: Colors.white.withValues(alpha: 0.12),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.local_offer_rounded, size: 14, color: Colors.amberAccent),
+                          SizedBox(width: 6),
+                          Text(
+                            'SPECIAL HEALTH BENEFIT',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.amberAccent,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        '80% OFF',
+                        style: TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Flat 80% OFF on Generic Medicines',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Order verified prescription drugs & generic alternatives delivered right to your doorstep. Use code MEDI80 at checkout.',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 12.5,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF0F766E),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        elevation: 0,
+                      ),
+                      onPressed: () {
+                        try {
+                          context.push('/patient/medicines');
+                        } catch (_) {
+                          context.go('/patient/medicines');
+                        }
+                      },
+                      icon: const Icon(Icons.shopping_bag_outlined, size: 16),
+                      label: const Text(
+                        'Explore Medications',
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                      ),
+                      child: const Text(
+                        'CODE: MEDI80',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdherenceTrackerCard(int takenDoses, int totalDoses) {
+    final double percentage = totalDoses > 0
+        ? (takenDoses / totalDoses) * 100
+        : 80.0;
+    final isBenchmark = totalDoses == 0;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 58,
+                height: 58,
+                child: CircularProgressIndicator(
+                  value: (percentage / 100).clamp(0.0, 1.0),
+                  backgroundColor: AppColors.primaryLight,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    percentage >= 80 ? AppColors.success : (percentage >= 50 ? AppColors.warning : AppColors.primary),
+                  ),
+                  strokeWidth: 6,
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              Text(
+                '${percentage.toStringAsFixed(0)}%',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  color: AppColors.textPrimaryLight,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Daily Adherence Score',
+                      style: AppTextStyles.titleMedium.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    if (percentage >= 80)
+                      const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 16),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  isBenchmark
+                      ? 'Target adherence 80%+ • Log your daily dosages to maintain your healthy habits!'
+                      : '$takenDoses of $totalDoses scheduled doses taken today. ${percentage >= 80 ? 'Excellent adherence!' : 'Remember to take your doses.'}',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondaryLight,
+                    fontSize: 12,
+                    height: 1.3,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
