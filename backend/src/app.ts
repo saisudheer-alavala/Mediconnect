@@ -58,6 +58,11 @@ export const createApp = (): Application => {
   // 5. Global API Rate Limiter
   app.use('/api/v1', apiRateLimiter);
 
+  // Root Redirect to API v1
+  app.get('/', (_req: Request, res: Response) => {
+    res.redirect('/api/v1');
+  });
+
   // 6. API V1 Routes
   app.use('/api/v1', apiRouter);
 

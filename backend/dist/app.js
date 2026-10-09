@@ -53,6 +53,10 @@ const createApp = () => {
     app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
     // 5. Global API Rate Limiter
     app.use('/api/v1', rate_limit_middleware_1.apiRateLimiter);
+    // Root Redirect to API v1
+    app.get('/', (_req, res) => {
+        res.redirect('/api/v1');
+    });
     // 6. API V1 Routes
     app.use('/api/v1', routes_1.apiRouter);
     // 7. 404 Route Catch-All
