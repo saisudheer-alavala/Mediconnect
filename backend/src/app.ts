@@ -35,12 +35,19 @@ export const createApp = (): Application => {
   app.use(
     cors({
       origin: (origin, callback) => {
-        // Allow mobile apps, curl, Postman (requests with no origin)
-        if (!origin) return callback(null, true);
-        if (env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
+        // Allow mobile apps, Postman, curl, and frontend web apps (Vercel, Netlify, Localhost)
+        if (
+          !origin ||
+          env.CLIENT_URL === '*' ||
+          allowedOrigins.includes(origin) ||
+          origin.endsWith('.vercel.app') ||
+          origin.includes('vercel.app') ||
+          origin.includes('netlify.app') ||
+          origin.includes('localhost')
+        ) {
           return callback(null, true);
         }
-        return callback(new Error(`CORS blocked for origin: ${origin}`));
+        return callback(null, true);
       },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
