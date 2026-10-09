@@ -2,10 +2,11 @@
 class ApiEndpoints {
   ApiEndpoints._();
 
-  // Change this to your local backend IP when running on a physical device or emulator.
-  // Android Emulator: http://10.0.2.2:5000/api/v1
-  // iOS Simulator / Desktop: http://localhost:5000/api/v1
-  static const String baseUrl = 'http://localhost:5000/api/v1';
+  // Configurable at build time via --dart-define=API_BASE_URL=https://...
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:5000/api/v1',
+  );
 
   static const Duration connectTimeout = Duration(seconds: 15);
   static const Duration receiveTimeout = Duration(seconds: 15);
