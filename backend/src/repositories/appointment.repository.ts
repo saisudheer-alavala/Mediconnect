@@ -145,7 +145,16 @@ export class AppointmentRepository {
             },
           },
         },
-        patient: true,
+        patient: {
+          include: {
+            user: {
+              select: {
+                phone: true,
+                email: true,
+              },
+            },
+          },
+        },
       },
       orderBy: [{ appointmentDate: 'asc' }, { startTime: 'asc' }],
     }) as Promise<AppointmentWithDetails[]>;
@@ -165,7 +174,16 @@ export class AppointmentRepository {
             },
           },
         },
-        patient: true,
+        patient: {
+          include: {
+            user: {
+              select: {
+                phone: true,
+                email: true,
+              },
+            },
+          },
+        },
       },
     }) as Promise<AppointmentWithDetails | null>;
   }

@@ -16,6 +16,12 @@ class AppointmentModel {
   final String? clinicAddress;
   final double consultationFee;
   final String? patientName;
+  final String? patientPhone;
+  final String? patientGender;
+  final String? patientDob;
+  final String? patientBloodGroup;
+  final String? patientAllergies;
+  final String? patientChronicDiseases;
 
   const AppointmentModel({
     required this.id,
@@ -33,6 +39,12 @@ class AppointmentModel {
     this.clinicAddress,
     this.consultationFee = 50.0,
     this.patientName,
+    this.patientPhone,
+    this.patientGender,
+    this.patientDob,
+    this.patientBloodGroup,
+    this.patientAllergies,
+    this.patientChronicDiseases,
   });
 
   bool get isUpcoming => status == 'CONFIRMED' || status == 'PENDING';
@@ -82,8 +94,23 @@ class AppointmentModel {
     }
 
     String? patName;
+    String? patPhone;
+    String? patGender;
+    String? patDob;
+    String? patBloodGroup;
+    String? patAllergies;
+    String? patChronicDiseases;
     if (json['patient'] != null && json['patient'] is Map<String, dynamic>) {
-      patName = (json['patient'] as Map<String, dynamic>)['fullName'] as String?;
+      final p = json['patient'] as Map<String, dynamic>;
+      patName = p['fullName'] as String?;
+      patGender = p['gender'] as String?;
+      patDob = p['dateOfBirth'] as String?;
+      patBloodGroup = p['bloodGroup'] as String?;
+      patAllergies = p['allergies'] as String?;
+      patChronicDiseases = p['chronicDiseases'] as String?;
+      if (p['user'] != null && p['user'] is Map<String, dynamic>) {
+        patPhone = (p['user'] as Map<String, dynamic>)['phone'] as String?;
+      }
     }
 
     return AppointmentModel(
@@ -102,6 +129,12 @@ class AppointmentModel {
       clinicAddress: address,
       consultationFee: fee,
       patientName: patName,
+      patientPhone: patPhone,
+      patientGender: patGender,
+      patientDob: patDob,
+      patientBloodGroup: patBloodGroup,
+      patientAllergies: patAllergies,
+      patientChronicDiseases: patChronicDiseases,
     );
   }
 
@@ -122,6 +155,12 @@ class AppointmentModel {
       'clinicAddress': clinicAddress,
       'consultationFee': consultationFee,
       'patientName': patientName,
+      'patientPhone': patientPhone,
+      'patientGender': patientGender,
+      'patientDob': patientDob,
+      'patientBloodGroup': patientBloodGroup,
+      'patientAllergies': patientAllergies,
+      'patientChronicDiseases': patientChronicDiseases,
     };
   }
 
@@ -145,6 +184,12 @@ class AppointmentModel {
       clinicAddress: clinicAddress,
       consultationFee: consultationFee,
       patientName: patientName,
+      patientPhone: patientPhone,
+      patientGender: patientGender,
+      patientDob: patientDob,
+      patientBloodGroup: patientBloodGroup,
+      patientAllergies: patientAllergies,
+      patientChronicDiseases: patientChronicDiseases,
     );
   }
 }

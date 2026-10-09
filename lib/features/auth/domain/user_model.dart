@@ -80,6 +80,8 @@ class DoctorProfileModel {
   final String? specializationName;
   final bool isVerified;
   final String? bio;
+  final double? consultationFee;
+  final String? avatarUrl;
 
   const DoctorProfileModel({
     required this.id,
@@ -92,12 +94,19 @@ class DoctorProfileModel {
     this.specializationName,
     this.isVerified = false,
     this.bio,
+    this.consultationFee,
+    this.avatarUrl,
   });
 
   factory DoctorProfileModel.fromJson(Map<String, dynamic> json) {
     String? specName;
     if (json['specialization'] != null && json['specialization'] is Map) {
       specName = json['specialization']['name'] as String?;
+    }
+
+    double? fee;
+    if (json['consultationFee'] != null) {
+      fee = double.tryParse(json['consultationFee'].toString());
     }
 
     return DoctorProfileModel(
@@ -111,6 +120,8 @@ class DoctorProfileModel {
       specializationName: specName,
       isVerified: json['isVerified'] as bool? ?? false,
       bio: json['bio'] as String?,
+      consultationFee: fee,
+      avatarUrl: json['avatarUrl'] as String?,
     );
   }
 
@@ -124,6 +135,8 @@ class DoctorProfileModel {
         'clinicAddress': clinicAddress,
         'isVerified': isVerified,
         'bio': bio,
+        'consultationFee': consultationFee,
+        'avatarUrl': avatarUrl,
       };
 }
 

@@ -497,22 +497,95 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildDomainDetailsCard(UserModel user) {
     if (user.role == UserRole.doctor) {
       final doc = user.doctorProfile;
+      final feeText = doc?.consultationFee != null
+          ? '\$${doc!.consultationFee!.toStringAsFixed(0)}'
+          : '\$75';
+      final isVerified = doc?.isVerified ?? false;
+
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: AppColors.backgroundLight,
-          borderRadius: BorderRadius.circular(14),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.borderLight),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Clinical Practice & Credentials',
+                      style: AppTextStyles.titleSmall.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: isVerified ? AppColors.successLight : AppColors.warningLight,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isVerified ? Icons.verified_rounded : Icons.pending_outlined,
+                            size: 12,
+                            color: isVerified ? AppColors.success : AppColors.warning,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            isVerified ? 'VERIFIED' : 'PENDING',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: isVerified ? AppColors.success : const Color(0xFF92400E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                InkWell(
+                  onTap: () => _showEditProfileSheet(user),
+                  child: Text(
+                    'Edit Details',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 20),
             Row(
               children: [
                 Expanded(
                   child: _buildDetailStat(
-                    label: 'Qualification',
+                    label: 'Specialty',
+                    value: doc?.specializationName ?? 'General Practice',
+                    icon: Icons.medical_services_outlined,
+                    iconColor: AppColors.primary,
+                  ),
+                ),
+                Expanded(
+                  child: _buildDetailStat(
+                    label: 'Qualifications',
                     value: doc?.qualification ?? 'MD',
                     icon: Icons.school_outlined,
+                    iconColor: AppColors.secondary,
                   ),
                 ),
                 Expanded(
@@ -520,16 +593,111 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     label: 'Experience',
                     value: '${doc?.experienceYears ?? 0} Years',
                     icon: Icons.history_edu_outlined,
+                    iconColor: const Color(0xFF0D9488),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDetailStat(
+                    label: 'Consultation Fee',
+                    value: '$feeText / Visit',
+                    icon: Icons.payments_outlined,
+                    iconColor: AppColors.success,
                   ),
                 ),
                 Expanded(
                   child: _buildDetailStat(
-                    label: 'Clinic',
-                    value: doc?.clinicName ?? 'Private Clinic',
-                    icon: Icons.local_hospital_outlined,
+                    label: 'Medical License',
+                    value: doc?.licenseNumber.isNotEmpty == true ? doc!.licenseNumber : 'MD-REG-VERIFIED',
+                    icon: Icons.badge_outlined,
+                    iconColor: AppColors.primaryDark,
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _buildDetailStat(
+                    label: 'Hospital / Clinic',
+                    value: doc?.clinicName ?? 'Private Clinic',
+                    icon: Icons.local_hospital_outlined,
+                    iconColor: AppColors.primary,
+                  ),
+                ),
+                if (doc?.clinicAddress != null && doc!.clinicAddress!.isNotEmpty)
+                  Expanded(
+                    child: _buildDetailStat(
+                      label: 'Clinic Address',
+                      value: doc.clinicAddress!,
+                      icon: Icons.location_on_outlined,
+                      iconColor: AppColors.textSecondaryLight,
+                    ),
+                  ),
+              ],
+            ),
+            if (doc?.bio != null && doc!.bio!.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              _buildDetailStat(
+                label: 'Professional Background',
+                value: doc.bio!,
+                icon: Icons.notes_outlined,
+                iconColor: AppColors.textSecondaryLight,
+              ),
+            ],
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_month_rounded, color: AppColors.primary, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Practice & Patient Management',
+                          style: AppTextStyles.labelMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                        Text(
+                          'Configure consultation timings, working hours & live patient queues.',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textSecondaryLight,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      try {
+                        context.go('/doctor/schedule');
+                      } catch (_) {}
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    child: const Text('Schedule', style: TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

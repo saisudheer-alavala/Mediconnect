@@ -125,6 +125,31 @@ class AppointmentController extends Notifier<AppointmentState> {
     }
   }
 
+  Future<bool> updateAppointmentStatus(String id, String newStatus, {String? reason}) async {
+    try {
+      if (newStatus == 'CANCELLED') {
+        await _repository.cancelAppointment(id, reason: reason);
+      } else {
+        await _repository.updateStatus(id, newStatus);
+      }
+      final updatedList = state.appointments.map((a) {
+        if (a.id == id) {
+          return a.copyWith(status: newStatus, cancellationReason: reason);
+        }
+        return a;
+      }).toList();
+
+      state = state.copyWith(
+        appointments: updatedList,
+        successMessage: 'Appointment status updated to $newStatus.',
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(errorMessage: e.toString());
+      return false;
+    }
+  }
+
   List<AppointmentModel> _getFallbackAppointments() {
     final now = DateTime.now();
     return [
@@ -141,6 +166,13 @@ class AppointmentController extends Notifier<AppointmentState> {
         clinicName: 'City Heart Hospital',
         clinicAddress: '424 Health Park Blvd, Suite 300',
         consultationFee: 75.0,
+        patientName: 'Michael Chang',
+        patientPhone: '+1 (555) 321-7654',
+        patientGender: 'MALE',
+        patientDob: '1982-04-12',
+        patientBloodGroup: 'O+',
+        patientAllergies: 'Penicillin',
+        patientChronicDiseases: 'Hypertension, Regular BP checks',
         patientNotes: 'Annual check-up and blood pressure monitoring',
       ),
       AppointmentModel(
@@ -156,6 +188,13 @@ class AppointmentController extends Notifier<AppointmentState> {
         clinicName: 'Skin & Glow Clinic',
         clinicAddress: '180 Broadway Medical Center',
         consultationFee: 60.0,
+        patientName: 'Emma Watson',
+        patientPhone: '+1 (555) 789-0123',
+        patientGender: 'FEMALE',
+        patientDob: '1990-07-25',
+        patientBloodGroup: 'A+',
+        patientAllergies: 'None',
+        patientChronicDiseases: 'Eczema flare-up',
         patientNotes: 'Skin irritation and routine allergy test',
       ),
       AppointmentModel(
@@ -172,6 +211,12 @@ class AppointmentController extends Notifier<AppointmentState> {
         clinicName: 'Neuro Healthcare Center',
         clinicAddress: '55 University Avenue',
         consultationFee: 90.0,
+        patientName: 'David Miller',
+        patientPhone: '+1 (555) 456-7890',
+        patientGender: 'MALE',
+        patientDob: '1975-11-03',
+        patientBloodGroup: 'B+',
+        patientNotes: 'Migraine assessment follow-up',
       ),
     ];
   }

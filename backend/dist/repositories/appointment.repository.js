@@ -115,7 +115,16 @@ class AppointmentRepository {
                         },
                     },
                 },
-                patient: true,
+                patient: {
+                    include: {
+                        user: {
+                            select: {
+                                phone: true,
+                                email: true,
+                            },
+                        },
+                    },
+                },
             },
             orderBy: [{ appointmentDate: 'asc' }, { startTime: 'asc' }],
         });
@@ -134,7 +143,16 @@ class AppointmentRepository {
                         },
                     },
                 },
-                patient: true,
+                patient: {
+                    include: {
+                        user: {
+                            select: {
+                                phone: true,
+                                email: true,
+                            },
+                        },
+                    },
+                },
             },
         });
     }

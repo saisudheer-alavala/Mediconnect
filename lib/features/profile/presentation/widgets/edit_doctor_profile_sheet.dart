@@ -42,7 +42,9 @@ class _EditDoctorProfileSheetState extends ConsumerState<EditDoctorProfileSheet>
     );
     _clinicNameController = TextEditingController(text: profile?.clinicName ?? '');
     _clinicAddressController = TextEditingController(text: profile?.clinicAddress ?? '');
-    _feeController = TextEditingController(text: '75.00');
+    _feeController = TextEditingController(
+      text: profile?.consultationFee != null ? profile!.consultationFee!.toStringAsFixed(0) : '75',
+    );
     _bioController = TextEditingController(text: profile?.bio ?? '');
   }
 
