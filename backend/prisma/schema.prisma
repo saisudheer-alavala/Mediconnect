@@ -1,0 +1,379 @@
+// MediCare Connect - PostgreSQL Database Schema
+// Generated via Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------
+// ENUMS
+// ----------------------------------------------------
+
+enum UserRole {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum DoseStatus {
+  TAKEN
+  SKIPPED
+  MISSED
+}
+
+enum HealthRecordCategory {
+  BLOOD_TEST
+  PRESCRIPTION
+  X_RAY
+  SCAN
+  DISCHARGE_SUMMARY
+  OTHER
+}
+
+enum NotificationType {
+  APPOINTMENT
+  MEDICINE
+  SYSTEM
+}
+
+// ----------------------------------------------------
+// USER & IDENTITY
+// ----------------------------------------------------
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  phone        String?
+  role         UserRole  @default(PATIENT)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  patientProfile PatientProfile?
+  doctorProfile  DoctorProfile?
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+
+  @@map("users")
+}
+
+// ----------------------------------------------------
+// PATIENT DOMAIN
+// ----------------------------------------------------
+
+model PatientProfile {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName        String
+  dateOfBirth     DateTime?
+  gender          Gender?
+  bloodGroup      String?
+  allergies       String?
+  chronicDiseases String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  medicines         Medicine[]
+  medicineLogs      MedicineLog[]
+  appointments      Appointment[]
+  healthRecords     HealthRecord[]
+  prescriptions     Prescription[]
+  emergencyContacts EmergencyContact[]
+  reviews           DoctorReview[]
+
+  @@map("patient_profiles")
+}
+
+// ----------------------------------------------------
+// DOCTOR DOMAIN
+// ----------------------------------------------------
+
+model Specialization {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  iconUrl     String?
+  createdAt   DateTime @default(now())
+
+  doctors DoctorProfile[]
+
+  @@map("specializations")
+}
+
+model DoctorProfile {
+  id               String          @id @default(uuid())
+  userId           String          @unique
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName         String
+  specializationId String?
+  specialization   Specialization? @relation(fields: [specializationId], references: [id], onDelete: SetNull)
+  qualification    String
+  licenseNumber    String          @unique
+  experienceYears  Int             @default(0)
+  clinicName       String
+  clinicAddress    String?
+  consultationFee  Decimal?        @db.Decimal(10, 2)
+  isVerified       Boolean         @default(false)
+  bio              String?
+  avatarUrl        String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  availabilities DoctorAvailability[]
+  appointments   Appointment[]
+  prescriptions  Prescription[]
+  reviews        DoctorReview[]
+
+  @@map("doctor_profiles")
+}
+
+model DoctorAvailability {
+  id                 String        @id @default(uuid())
+  doctorId           String
+  doctor             DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  dayOfWeek          Int           // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  startTime          String        // e.g. "09:00"
+  endTime            String        // e.g. "17:00"
+  slotDurationMinutes Int          @default(30)
+  breakStartTime     String?       // e.g. "13:00"
+  breakEndTime       String?       // e.g. "14:00"
+  isActive           Boolean       @default(true)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@unique([doctorId, dayOfWeek])
+  @@map("doctor_availabilities")
+}
+
+// ----------------------------------------------------
+// APPOINTMENTS (CareConnect)
+// ----------------------------------------------------
+
+model Appointment {
+  id                 String            @id @default(uuid())
+  patientId          String
+  patient            PatientProfile    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId           String
+  doctor             DoctorProfile     @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  appointmentDate    DateTime          @db.Date
+  startTime          String            // e.g. "10:00"
+  endTime            String            // e.g. "10:30"
+  status             AppointmentStatus @default(PENDING)
+  patientNotes       String?
+  cancellationReason String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  prescription Prescription?
+
+  // Prevent double booking for the same doctor, date, and start time
+  @@unique([doctorId, appointmentDate, startTime])
+  @@index([patientId, appointmentDate])
+  @@index([doctorId, appointmentDate])
+  @@map("appointments")
+}
+
+// ----------------------------------------------------
+// MEDICINES & ADHERENCE (MediTrack)
+// ----------------------------------------------------
+
+model Medicine {
+  id           String         @id @default(uuid())
+  patientId    String
+  patient      PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  name         String
+  dosage       String         // e.g. "500mg", "1 tablet"
+  frequency    String         // e.g. "Twice daily", "Every 8 hours"
+  instructions String?        // e.g. "After food"
+  startDate    DateTime       @db.Date
+  endDate      DateTime?      @db.Date
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  reminders MedicineReminder[]
+  logs      MedicineLog[]
+
+  @@index([patientId, isActive])
+  @@map("medicines")
+}
+
+model MedicineReminder {
+  id           String   @id @default(uuid())
+  medicineId   String
+  medicine     Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  reminderTime String   // e.g. "08:00", "14:00", "20:00"
+  createdAt    DateTime @default(now())
+
+  @@map("medicine_reminders")
+}
+
+model MedicineLog {
+  id            String         @id @default(uuid())
+  medicineId    String
+  medicine      Medicine       @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  patientId     String
+  patient       PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  scheduledTime DateTime
+  takenTime     DateTime?
+  status        DoseStatus     @default(TAKEN)
+  notes         String?
+  createdAt     DateTime       @default(now())
+
+  @@index([patientId, scheduledTime])
+  @@map("medicine_logs")
+}
+
+// ----------------------------------------------------
+// HEALTH RECORDS
+// ----------------------------------------------------
+
+model HealthRecord {
+  id          String               @id @default(uuid())
+  patientId   String
+  patient     PatientProfile       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  title       String
+  category    HealthRecordCategory @default(OTHER)
+  description String?
+  fileUrl     String
+  fileSize    Int?
+  mimeType    String?
+  uploadedAt  DateTime             @default(now())
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@index([patientId, category])
+  @@map("health_records")
+}
+
+// ----------------------------------------------------
+// PRESCRIPTIONS
+// ----------------------------------------------------
+
+model Prescription {
+  id                  String         @id @default(uuid())
+  appointmentId       String?        @unique
+  appointment         Appointment?   @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  patientId           String
+  patient             PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId            String
+  doctor              DoctorProfile  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  diagnosis           String?
+  generalInstructions String?
+  issuedAt            DateTime       @default(now())
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  medicines PrescriptionMedicine[]
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@map("prescriptions")
+}
+
+model PrescriptionMedicine {
+  id             String       @id @default(uuid())
+  prescriptionId String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  medicineName   String
+  dosage         String
+  frequency      String
+  durationDays   Int
+  instructions   String?
+
+  @@map("prescription_medicines")
+}
+
+// ----------------------------------------------------
+// EMERGENCY & ICE (In Case of Emergency)
+// ----------------------------------------------------
+
+model EmergencyContact {
+  id           String         @id @default(uuid())
+  patientId    String
+  patient      PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  name         String
+  relationship String         // e.g. "Spouse", "Parent", "Sibling"
+  phone        String
+  isPrimary    Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@map("emergency_contacts")
+}
+
+// ----------------------------------------------------
+// NOTIFICATIONS & AUDIT
+// ----------------------------------------------------
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      NotificationType @default(SYSTEM)
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  resource  String
+  ipAddress String?
+  details   String?
+  timestamp DateTime @default(now())
+
+  @@index([userId, action])
+  @@map("audit_logs")
+}
+
+// ----------------------------------------------------
+// DOCTOR RATINGS & REVIEWS
+// ----------------------------------------------------
+
+model DoctorReview {
+  id            String         @id @default(uuid())
+  doctorId      String
+  doctor        DoctorProfile  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patientId     String
+  patient       PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  appointmentId String?
+  rating        Int            // 1 to 5
+  title         String?
+  comment       String
+  isVerified    Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([doctorId])
+  @@index([patientId])
+  @@map("doctor_reviews")
+}
